@@ -48,14 +48,14 @@ def fill_map(game_map, type):
         if not position[0].isdigit():
             break
         position = position.split(",")
+        if position[0] < 0 or position[0] >= map_size or position[1] < 0 or position[1] >= map_size:
+            continue
         if game_map[int(position[0])][int(position[1])] == 0:
             game_map[int(position[0])][int(position[1])] = character
             if type == "player":
                 player_pos.append(int(position[0]))
                 player_pos.append(int(position[1]))
                 return
-        else:
-            print("Posicao Invalida. Tente novamente")
 
 def move_player(game_map, k):
     new_ppos = []
