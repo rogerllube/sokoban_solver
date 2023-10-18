@@ -126,6 +126,26 @@ def check_win(game_map):
             return False
     return True
 
+def evaluate_cell(game_map, size, x, y):
+    match game_map[y][x]:
+        case 'g' | 'p' | 't':
+            min_dist = float('inf')
+            for i in range(size):
+                for j in range(size):
+                    dist = abs(i - y) + abs(j - x)
+                    if game_map[i][j] == "b" and dist < min_dist:
+                        min_dist = dist
+            return min_dist
+        case _: 
+            return 0
+    
+def evaluate_board(game_map, size):
+    sum = 0
+    for i in range(size):
+        for j in range(size):
+            sum += evaluate_cell(game_map, size, j, i)
+    return sum
+
 def run_game(game_map):
     while True:
         with keyboard.Listener(
