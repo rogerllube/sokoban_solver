@@ -86,7 +86,7 @@ class Board:
 
         match self.get(new_pos):
             case CellType.EMPTY: return True
-
+            case CellType.BUTTON: return True
             case CellType.BOX:
                 newest_pos = pos_plus_dir(new_pos, dir)
                 return True if (
@@ -96,8 +96,8 @@ class Board:
             
             case other: return False
     
-    def can_move (self, dir : Direction):
-        return self.cell_can_move_to(self.player, dir)
+    # def can_move (self, dir : Direction):
+    #     return self.cell_can_move_to(self.player, dir)
         
     def options (self, pos : (int, int)):
         return filter(lambda d: self.cell_can_move_to(pos, d), Direction)
@@ -105,26 +105,32 @@ class Board:
     def neighbors (self, pos : (int, int)):
         return map(lambda d: pos_plus_dir(pos, d), self.options(pos))
     
+    def mutable_move (self, dir : Direction)
+        
+
     def move (self, dir : Direction):
-        if (None == self.player): raise Exception("Player not defined!")
-        if (not self.can_move_to(self.player, dir)): raise Exception("Cannot move there!")
+        b = self.clone()
+        return self.mutable_move(dir)
+
     
     def __get_box_dist(self, p : (int, int)) -> int:
         pass
 
-    def __eval_cell(self, p : (int, int)) -> int:
+    def eval_cell(self, p : (int, int)) -> int:
         c = self.get(p)
         if (c not in SCORE_RELEVANT_CELLS): return 0
+        return self.get_min_box_dist(p)
 
     def eval(self) -> int:
-        return sum(map(self.buttons, self.__eval_cell)) + self.__eval_cell(self.player) - 1 
+        relevant_cells = self.buttons + [self.player]
+        return sum(map(self.eval_cell, relevant_cells))
 
     def print(self) -> None:
         for line in self.matrix:
             for cell in line: print(cell.value, end="")
             print("")
 
-    def astar_dist(self, source: Tuple[int, int], destiny: Tuple[int, int]) -> int:
+    def astar_dist(self, source: Tuple[int, int], destiny: Tuple[int, int], mark : bool = False) -> int:
         # Define a heuristic function for estimating the remaining cost (Manhattan distance).
         def heuristic(cell, goal):
             return abs(cell[0] - goal[0]) + abs(cell[1] - goal[1])
@@ -148,9 +154,10 @@ class Board:
                     path.append(current)
 
                 # Update the cells in the path to CellType.PATH
-                for cell in path:
-                    if self.get(cell) != CellType.PLAYER:
-                        self.set(cell, CellType.PATH)
+                if mark: 
+                    for cell in path:
+                        if self.get(cell) != CellType.PLAYER:
+                            self.set(cell, CellType.PATH)
 
                 return g_score[destiny]  # Distance from source to destination
 
@@ -171,26 +178,37 @@ class Board:
         # If the open list is empty and the destination is not reached, return a large value
         return float('inf')
 
+    # TODO: improve this solution
+    def get_min_box_dist (self, point: (int, int)):
+        return min([self.astar_dist(point, btn) for btn in self.buttons])
 
 if '__main__' == __name__:
-    b = Board(7)
+    # b = Board(7)
     # b.set((1, 1), CellType.PLAYER)
     # b.set((1, 2), CellType.WALL)
     # b.set((3, 3), CellType.BOX)
     # b.set((5, 5), CellType.BUTTON)
-    b.set((0, 0), CellType.PLAYER)
-    b.set((1, 0), CellType.WALL)
-    b.set((1, 1), CellType.WALL)
-    b.set((1, 2), CellType.WALL)
-    b.set((1, 3), CellType.WALL)
-    b.set((1, 4), CellType.WALL)
-    b.set((1, 5), CellType.WALL)
-    b.set((2, 5), CellType.WALL)
-    b.set((3, 5), CellType.WALL)
+    # b.set((0, 0), CellType.PLAYER)
+    # b.set((1, 0), CellType.WALL)
+    # b.set((1, 1), CellType.WALL)
+    # b.set((1, 2), CellType.WALL)
+    # b.set((1, 3), CellType.WALL)
+    # b.set((1, 4), CellType.WALL)
+    # b.set((1, 5), CellType.WALL)
+    # b.set((2, 5), CellType.WALL)
+    # b.set((3, 5), CellType.WALL)
     # b.set((3, 1), CellType.BUTTON)
     
-    print("Movement options availble:", list(b.options((0, 0))))
-    b.print()
-    print("Min dist between player and box: ", b.astar_dist((0, 0), (3, 1)))
-    b.print()
+    # print("Movement options availble:", list(b.options((0, 0))))
+    # b.print()
+    # print("Min dist between player and box: ", b.astar_dist((0, 0), (3, 1), mark=True))
+    # b.print()
+    # print("SCORE: ", b.eval())
     # print(b.matrix)
+
+    b = Board(3)
+    b.set((1, 0), CellType.PLAYER)
+    b.set((1, 1), CellType.BOX)
+    b.set((2, 2), CellType.BUTTON)
+    b.print()
+    print("SCORE: ", b.eval())
