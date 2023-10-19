@@ -17,10 +17,19 @@ def on_press(key):
         return False
 
 def print_map(game_map):
+    symbol_dict = {
+        "b": "📦",
+        "w": "⬛",
+        "g": "🔘",
+        "p": "🧔",
+        0: "⬜",
+        "s": "☑️",
+        "t": "🧔"
+    }
     os.system('cls' if os.name == 'nt' else 'clear')
     for i in range(0, len(game_map)):
         for j in range(0, len(game_map)):
-            print(game_map[i][j], end=" ")
+            print(symbol_dict[game_map[i][j]], end="")
         print()
 
 def fill_map(game_map, type):
@@ -48,14 +57,14 @@ def fill_map(game_map, type):
         if not position[0].isdigit():
             break
         position = position.split(",")
+        if int(position[0]) < 0 or int(position[0]) >= map_size or int(position[1]) < 0 or int(position[1]) >= map_size:
+            continue
         if game_map[int(position[0])][int(position[1])] == 0:
             game_map[int(position[0])][int(position[1])] = character
             if type == "player":
                 player_pos.append(int(position[0]))
                 player_pos.append(int(position[1]))
                 return
-        else:
-            print("Posicao Invalida. Tente novamente")
 
 def move_player(game_map, k):
     new_ppos = []
@@ -89,7 +98,7 @@ def move_player(game_map, k):
         game_map[player_pos[0]][player_pos[1]] = 0 if game_map[player_pos[0]][player_pos[1]] == 'p' else 'g'
         player_pos = new_ppos
 
-    if game_map[new_ppos[0]][new_ppos[1]] == 'b':
+    if game_map[new_ppos[0]][new_ppos[1]] == 'b' or game_map[new_ppos[0]][new_ppos[1]] == 's':
         new_bpos = []
         if k == "up":
             new_bpos.append(new_ppos[0] - 1)
@@ -126,6 +135,26 @@ def check_win(game_map):
             return False
     return True
 
+def evaluate_cell(game_map, size, x, y):
+    match game_map[y][x]:
+        case 'g' | 'p' | 't':
+            min_dist = float('inf')
+            for i in range(size):
+                for j in range(size):
+                    dist = abs(i - y) + abs(j - x)
+                    if game_map[i][j] == "b" and dist < min_dist:
+                        min_dist = dist
+            return min_dist
+        case _:
+            return 0
+
+def evaluate_board(game_map, size):
+    sum = 0
+    for i in range(size):
+        for j in range(size):
+            sum += evaluate_cell(game_map, size, j, i)
+    return sum
+
 def run_game(game_map):
     while True:
         with keyboard.Listener(
@@ -135,6 +164,7 @@ def run_game(game_map):
             k = pressed_key.pop(0)
             move_player(game_map, k)
             print_map(game_map)
+            print("Heuristica do Board: " + str(evaluate_board(game_map, map_size)))
             win_flag = check_win(game_map)
         if win_flag:
             print("Parabens, voce resolveu o problema")
