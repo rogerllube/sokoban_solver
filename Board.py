@@ -85,7 +85,7 @@ class Board:
         if (not self.is_inside(new_pos)): return False
 
         match self.get(new_pos):
-            case CellType.EMPTY: return True
+            case CellType.EMPTY | CellType.PATH: return True
             case CellType.BUTTON: return True
             case CellType.BOX:
                 newest_pos = pos_plus_dir(new_pos, dir)
@@ -105,13 +105,33 @@ class Board:
     def neighbors (self, pos : (int, int)):
         return map(lambda d: pos_plus_dir(pos, d), self.options(pos))
     
-    def mutable_move (self, dir : Direction)
-        
+    def __mutable_move (self, dir : Direction):
+        # TODO: Add more err handling here
+        # TODO: optmize
+        if not self.cell_can_move_to(self.player, dir): raise Exception("AAAAAAA!")
+
+        # Positions
+        p0 = self.player # position 0
+        p1 = pos_plus_dir(p0, dir) # position 1
+        p2 = pos_plus_dir(p1, dir) # position 2
+
+        # Values
+        v0 = self.get(p0) # value 0
+        v1 = self.get(p1) # value 1
+        v2 = self.get(p2) # value 2
+
+        # Seting the new value of where we were
+        self.set(p0, CellType.BUTTON if CellType.PALYER_OVER_BUTTON == v0 else CellType.EMPTY)
+        self.set(p1, CellType.PALYER_OVER_BUTTON if CellType.BUTTON == v1 else CellType.PLAYER)
+        if (CellType.BOX == v1): self.set(p2, CellType.BOX)
+
+        self.player = p1
+
+        return self
 
     def move (self, dir : Direction):
         b = self.clone()
-        return self.mutable_move(dir)
-
+        return self.__mutable_move(dir)
     
     def __get_box_dist(self, p : (int, int)) -> int:
         pass
@@ -207,8 +227,15 @@ if '__main__' == __name__:
     # print(b.matrix)
 
     b = Board(3)
-    b.set((1, 0), CellType.PLAYER)
+    b.set((0, 0), CellType.PLAYER)
     b.set((1, 1), CellType.BOX)
     b.set((2, 2), CellType.BUTTON)
+    print("First board:")
     b.print()
     print("SCORE: ", b.eval())
+
+    print("\nSecond board:")
+    b2 = b.move(Direction.RIGHT)
+    b2.print()
+    print("SCORE: ", b2.eval())
+
